@@ -1,27 +1,82 @@
 version: '3'
 services:
-  web:
-    container_name: srv-drupal-apache
+  archivos:
+    container_name: srv-antamina-archivos
     image: jorarmarfin/apache-php:7.2
     volumes:
-      - ./apache/www:/var/www
-      - ./apache/backup:/backup
+      - ./archivos/apache/:/var/www/
+      - ./archivos/backup/:/backup
     ports:
-      - 9004:80
+      - 83:80
     restart: always
     networks:
-      - net-drupal
+      - net-antamina
+  multimedia:
+    container_name: srv-antamina-multimedia
+    image: jorarmarfin/apache-php:7.2
+    volumes:
+      - ./multimedia/apache/:/var/www/
+      - ./multimedia/backup/:/backup
+    ports:
+      - 92:80
+    restart: always
+    networks:
+      - net-antamina
   db:
-    container_name: srv-drupal-mysql
+    container_name: srv-antamina-mysql
     image: mysql:5.7
+    ports:
+      - 3309:3306
     environment:
       - MYSQL_ROOT_PASSWORD=holaperu
     volumes:
       - ./mysql/data:/var/lib/mysql
       - ./mysql/config:/etc/mysql/conf.d
-      - ./mysql/backup:/backup
     restart: always
     networks:
-      - net-drupal
+      - net-antamina
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.5.4
+    container_name: srv-antamina-elasticsearch
+    restart: always
+    environment:
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elastic-data:/usr/share/elasticsearch/data
+    networks:
+      - net-antamina
+  kibana:
+    image: docker.elastic.co/kibana/kibana:6.5.4
+    container_name: srv-antamina-kibana
+    restart: always
+    depends_on:
+      - elasticsearch
+    environment:
+      ELASTICSEARCH_URL: http://srv-antamina-elasticsearch:9200/
+    networks:
+      - net-antamina
+  tareas:
+    image: ubuntu:18.04
+    container_name: srv-antamina-crontab
+    networks:
+      - net-antamina
+    volumes:
+      - ./mycrontab:/mycrontab
+    tty: true
+  adminer:
+    image: adminer:latest
+    container_name: srv-antamina-adminer
+    ports:
+      - 9008:8080
+    networks:
+      - net-antamina
 networks:
-  net-drupal:
+  net-antamina:
+volumes:
+  elastic-data:
