@@ -1,0 +1,27 @@
+version: '3'
+services:
+  web:
+    container_name: srv-drupal-apache
+    image: jorarmarfin/apache-php:7.2
+    volumes:
+      - ./apache/www:/var/www
+      - ./apache/backup:/backup
+    ports:
+      - 9004:80
+    restart: always
+    networks:
+      - net-drupal
+  db:
+    container_name: srv-drupal-mysql
+    image: mysql:5.7
+    environment:
+      - MYSQL_ROOT_PASSWORD=holaperu
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql/config:/etc/mysql/conf.d
+      - ./mysql/backup:/backup
+    restart: always
+    networks:
+      - net-drupal
+networks:
+  net-drupal:
